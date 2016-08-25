@@ -1,0 +1,13 @@
+TODO:
+	get robots.txt sitemaps + 
+	get category links +
+	get product links +
+	get image links +
+	get category listings
+		how to find page count?
+			do i need to find page count? - i guess no
+	get product details
+	download images
+		gg easy ^^
+	associate images
+		ez
