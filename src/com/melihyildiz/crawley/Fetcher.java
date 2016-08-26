@@ -9,21 +9,12 @@ import java.net.URL;
 @SuppressWarnings("StatementWithEmptyBody")
 class Fetcher implements Runnable {
     private static boolean parsingComplete = true;
-    private static int instanceCount = 0;
 
     String result;
     private String urlAddress;
 
     Fetcher(String urlAddress) {
-        int maxInstanceCount = 50;
-        while(getInstanceCount() >= maxInstanceCount){
-            try {
-                wait();
-            } catch (InterruptedException ignored) {
-            }
-        }
         this.urlAddress = urlAddress;
-        incInstanceCount();
     }
 
     public void run() {
@@ -62,21 +53,6 @@ class Fetcher implements Runnable {
             } catch (InterruptedException ignored) {
             }
         }
-        decInstanceCount();
         return result;
-    }
-
-    private synchronized void incInstanceCount() {
-        instanceCount++;
-        notify();
-    }
-
-    private synchronized void decInstanceCount() {
-        instanceCount--;
-        notify();
-    }
-
-    private synchronized int getInstanceCount() {
-        return instanceCount;
     }
 }

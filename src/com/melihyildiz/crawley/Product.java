@@ -6,8 +6,9 @@ import java.util.HashSet;
 /**
  * Created by YILDIZ on 24.08.2016.
  */
-public class Product {
+public class Product extends Parsable {
     public String id;
+    public String htmlContent;
     public String link;
     public ArrayList<String> options;
     public String imageLink;
@@ -15,8 +16,12 @@ public class Product {
     public String price2;
     public String description;
     public HashSet<Category> categories = new HashSet<>();
+
+    public Product(String htmlContent) {
+        this.htmlContent = htmlContent;
+    }
     /**
-     * id is the last element of split("-")
+     * id is the last element of link.split("-")
      * options are in ul.colorSelect (as li elements)
      * imageLink is div.product>div.ye2-1>div.ye2-11>a>img
      * price is div.product(data-price)
@@ -31,5 +36,11 @@ public class Product {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    @Override
+    public Runnable parse() {
+
+        return null;
     }
 }
