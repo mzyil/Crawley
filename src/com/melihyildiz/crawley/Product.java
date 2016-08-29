@@ -1,26 +1,36 @@
 package com.melihyildiz.crawley;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Created by YILDIZ on 24.08.2016.
  */
 public class Product extends Parsable implements Runnable {
-    public String id;
     public Element htmlContent;
+    @Expose
+    public String id;
+    @Expose
     public String link;
-    public ArrayList<String> options;
+    @Expose
+    public ArrayList<String[]> options;
+    @Expose
     public String imageLink;
+    @Expose
     public String price;
-    public String price2;
-    public String description;
+    @Expose
+    public String name;
 
     public Product(Element htmlContent) {
         this.htmlContent = htmlContent;
-        this.id = htmlContent.attr("data-id");
+        options = new ArrayList<>();
     }
+
     /**
      * id is the last element of link.split("-")
      * options are in ul.colorSelect (as li elements)
@@ -31,7 +41,7 @@ public class Product extends Parsable implements Runnable {
      */
     @Override
     public boolean equals(Object o) {
-        return (o instanceof Product) && ((Product)o).id.equals(this.id);
+        return (o instanceof Product) && ((Product) o).id.equals(this.id);
     }
 
     @Override
@@ -46,7 +56,18 @@ public class Product extends Parsable implements Runnable {
 
     @Override
     public void run() {
+        this.id = htmlContent.attr("data-id");
         this.link = htmlContent.select("div.ye2-132").first().select("a").first().attr("href");
+        Elements options = htmlContent.select("ul.colorSelect>li");
+        this.options.addAll(options.stream().map(option -> new String[]{option.attr("data-value"), option.text()}).collect(Collectors.toList()));
+        this.imageLink = htmlContent.select("div.product>div.ye2-1>div.ye2-11>a>img").first().attr("src");
+        this.price = htmlContent.attr("data-price");
+        this.name = htmlContent.select("div.ye2-12>a").first().text();
         Crawley.crawlData.put(id, this);
+    }
+
+    @Override
+    public String toString() {
+        return (new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()).toJson(this);
     }
 }

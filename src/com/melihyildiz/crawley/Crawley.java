@@ -1,11 +1,11 @@
 package com.melihyildiz.crawley;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import sitemapper.parser.beans.Url;
 import sitemapper.parser.core.SiteMapParser;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -35,16 +35,24 @@ public class Crawley extends ThreadPoolExecutor {
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.currentTimeMillis();
         Crawley crawley = getInstance();
         crawley.getSitemaps();
         crawley.parseSitemaps();
         crawley.executeTasks();
         crawley.waitForExecuted();
-        System.out.println("Done");
+        crawley.saveData();
+        System.out.println("Done. In: " + (System.currentTimeMillis() - start) + " seconds.");
     }
 
     public static Crawley getInstance() {
         return ourInstance;
+    }
+
+    private void saveData() throws IOException {
+        Gson factory = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+        factory.toJson(crawlData, new FileWriter(robotName + "/products.json"));
+        factory.toJson(relation, new FileWriter(robotName + "/realation.json"));
     }
 
     private void executeTasks() {
