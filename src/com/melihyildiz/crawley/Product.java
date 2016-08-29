@@ -1,24 +1,25 @@
 package com.melihyildiz.crawley;
 
+import org.jsoup.nodes.Element;
+
 import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * Created by YILDIZ on 24.08.2016.
  */
-public class Product extends Parsable {
+public class Product extends Parsable implements Runnable {
     public String id;
-    public String htmlContent;
+    public Element htmlContent;
     public String link;
     public ArrayList<String> options;
     public String imageLink;
     public String price;
     public String price2;
     public String description;
-    public HashSet<Category> categories = new HashSet<>();
 
-    public Product(String htmlContent) {
+    public Product(Element htmlContent) {
         this.htmlContent = htmlContent;
+        this.id = htmlContent.attr("data-id");
     }
     /**
      * id is the last element of link.split("-")
@@ -40,7 +41,12 @@ public class Product extends Parsable {
 
     @Override
     public Runnable parse() {
+        return this;
+    }
 
-        return null;
+    @Override
+    public void run() {
+        this.link = htmlContent.select("div.ye2-132").first().select("a").first().attr("href");
+        Crawley.crawlData.put(id, this);
     }
 }

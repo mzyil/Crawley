@@ -6,40 +6,40 @@ import sitemapper.parser.core.SiteMapParser;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
  * Created by YILDIZ on 18.08.2016.
  */
 @SuppressWarnings("FieldCanBeLocal")
-public class Crawley {
+public class Crawley extends ThreadPoolExecutor {
+    private static final int maxThread = 50;
+    public static Map<String, Parsable> crawlData = new ConcurrentHashMap<>();
+    public static List<String[]> relation = Collections.synchronizedList(new ArrayList<>());
+    public static String siteUrl = "http://www.akilliphone.com/";
     private static Crawley ourInstance = new Crawley();
-    private static Map<String, Parsable> crawlData = new ConcurrentHashMap<>();
-    private String siteUrl;
+    private int executing = 0;
     private String robotName;
     private HashSet<String> sitemaps;
     private ArrayList<String> initialCrawlQueue;
     private ExecutorService executorService;
 
     public Crawley() {
-        siteUrl = "http://www.akilliphone.com/";
+        super(maxThread, maxThread, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         robotName = "akilli";
         sitemaps = new HashSet<>();
         initialCrawlQueue = new ArrayList<>();
-        executorService = Executors.newFixedThreadPool(50);
+        executorService = this;
     }
 
     public static void main(String[] args) throws Exception {
         Crawley crawley = getInstance();
         crawley.getSitemaps();
         crawley.parseSitemaps();
-        crawley.createTasks();
+        crawley.executeTasks();
+        crawley.waitForExecuted();
         System.out.println("Done");
     }
 
@@ -47,11 +47,24 @@ public class Crawley {
         return ourInstance;
     }
 
-    private void createTasks() {
+    private void executeTasks() {
+        int inc = 0;
         for (String link : initialCrawlQueue) {
-            Category category = new Category(link);
+            String id = link.substring(link.lastIndexOf('-') + 1);
+            String listLink = Crawley.siteUrl + "/productlist/index/" + id + "/0";
+            int type = link.contains("/markalar/") ? 0 : 1;
+            if (type == 0) {
+                listLink = Crawley.siteUrl + "/productlist/brandlist/" + id + "/0/" + id;
+            }
+            Category category = new Category(listLink);
             category.parentExecutor = this.executorService;
+            category.id = id;
             executorService.execute(category.parse());
+            if (inc < 3) {
+                inc++;
+            } else {
+                break;
+            }
         }
     }
 
@@ -87,5 +100,25 @@ public class Crawley {
     private String getTxt() {
         Fetcher fetcher = new Fetcher(siteUrl + "robots.txt");
         return fetcher.fetch();
+    }
+
+    @Override
+    public synchronized void execute(Runnable command) {
+        executing++;
+        super.execute(command);
+    }
+
+
+    @Override
+    protected synchronized void afterExecute(Runnable r, Throwable t) {
+        super.afterExecute(r, t);
+        executing--;
+        notifyAll();
+    }
+
+    public synchronized void waitForExecuted() throws InterruptedException {
+        while (executing > 0)
+            wait();
+        this.shutdown();
     }
 }
