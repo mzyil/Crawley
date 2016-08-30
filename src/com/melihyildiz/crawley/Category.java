@@ -53,10 +53,12 @@ public class Category extends Parsable implements Runnable {
             System.out.println("Cannot be retrieved: " + link + " Cause: " + e.getMessage() + " and " + e.getLocalizedMessage());
             return;
         }
+        Product tempProduct = new Product();
         Elements products = doc.select("div.product");
         products.stream().filter(product -> !Crawley.crawlData.containsKey(product.attr("data-id"))).forEach(product -> {
             Crawley.relation.add(new String[]{this.id, product.attr("data-id")});
-            parentExecutor.execute(new Product(product).parse());
+            tempProduct.parseFields(product);
+            Crawley.crawlData.put(tempProduct.id, tempProduct.toString());
         });
         /*****
          * next pages
@@ -64,11 +66,8 @@ public class Category extends Parsable implements Runnable {
          */
         Elements next = doc.select("div.next");
         if (!next.isEmpty() && !next.first().select("a").isEmpty()) {
-            String nextLink = Crawley.siteUrl + next.first().select("a").first().attr("href");
-            Category category = new Category(nextLink);
-            category.id = this.id;
-            category.parentExecutor = this.parentExecutor;
-            parentExecutor.execute(category.parse());
+            this.link = Crawley.siteUrl + next.first().select("a").first().attr("href");
+            parentExecutor.execute(this.parse());
         } else {
             String pageCount = link.substring(link.lastIndexOf('/') + 1);
             if (pageCount.equals(this.id)) {

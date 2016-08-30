@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Created by YILDIZ on 24.08.2016.
  */
-public class Product extends Parsable implements Runnable {
+public class Product {
     public Element htmlContent;
     @Expose
     public String id;
@@ -26,9 +26,16 @@ public class Product extends Parsable implements Runnable {
     @Expose
     public String name;
 
-    public Product(Element htmlContent) {
+    public void parseFields(Element htmlContent) {
         this.htmlContent = htmlContent;
         options = new ArrayList<>();
+        this.id = htmlContent.attr("data-id");
+        this.link = htmlContent.select("div.ye2-132").first().select("a").first().attr("href");
+        Elements options = htmlContent.select("ul.colorSelect>li");
+        this.options.addAll(options.stream().map(option -> new String[]{option.attr("data-value"), option.text()}).collect(Collectors.toList()));
+        this.imageLink = htmlContent.select("div.product>div.ye2-1>div.ye2-11>a>img").first().attr("src");
+        this.price = htmlContent.attr("data-price");
+        this.name = htmlContent.select("div.ye2-12>a").first().text();
     }
 
     /**
@@ -47,23 +54,6 @@ public class Product extends Parsable implements Runnable {
     @Override
     public int hashCode() {
         return id.hashCode();
-    }
-
-    @Override
-    public Runnable parse() {
-        return this;
-    }
-
-    @Override
-    public void run() {
-        this.id = htmlContent.attr("data-id");
-        this.link = htmlContent.select("div.ye2-132").first().select("a").first().attr("href");
-        Elements options = htmlContent.select("ul.colorSelect>li");
-        this.options.addAll(options.stream().map(option -> new String[]{option.attr("data-value"), option.text()}).collect(Collectors.toList()));
-        this.imageLink = htmlContent.select("div.product>div.ye2-1>div.ye2-11>a>img").first().attr("src");
-        this.price = htmlContent.attr("data-price");
-        this.name = htmlContent.select("div.ye2-12>a").first().text();
-        Crawley.crawlData.put(id, this);
     }
 
     @Override

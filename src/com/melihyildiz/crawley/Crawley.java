@@ -5,7 +5,10 @@ import com.google.gson.GsonBuilder;
 import sitemapper.parser.beans.Url;
 import sitemapper.parser.core.SiteMapParser;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -16,7 +19,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("FieldCanBeLocal")
 public class Crawley extends ThreadPoolExecutor {
     private static final int maxThread = 50;
-    public static Map<String, Parsable> crawlData = new ConcurrentHashMap<>();
+    public static Map<String, String> crawlData = new ConcurrentHashMap<>();
     public static List<String[]> relation = Collections.synchronizedList(new ArrayList<>());
     public static String siteUrl = "http://www.akilliphone.com/";
     private static Crawley ourInstance = new Crawley();
@@ -51,8 +54,14 @@ public class Crawley extends ThreadPoolExecutor {
 
     private void saveData() throws IOException {
         Gson factory = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
-        factory.toJson(crawlData, new FileWriter(robotName + "/products.json"));
-        factory.toJson(relation, new FileWriter(robotName + "/realation.json"));
+        String crawlString = factory.toJson(crawlData);
+        String relationString = factory.toJson(relation);
+        PrintStream printStream = new PrintStream(new FileOutputStream(robotName + File.separator + "products.json"));
+        printStream.print(crawlString);
+        printStream.close();
+        printStream = new PrintStream(new FileOutputStream(robotName + File.separator + "relations.json"));
+        printStream.print(relationString);
+        printStream.close();
     }
 
     private void executeTasks() {
@@ -71,7 +80,7 @@ public class Crawley extends ThreadPoolExecutor {
             if (inc < 3) {
                 inc++;
             } else {
-                break;
+                //break;
             }
         }
     }
@@ -79,7 +88,7 @@ public class Crawley extends ThreadPoolExecutor {
     private void parseSitemaps() throws Exception {
         for (String sitemap : sitemaps) {
             String sitemapName = sitemap.substring(sitemap.lastIndexOf('/') + 1, sitemap.lastIndexOf('.')).replaceAll("\\d", "");
-            if ((sitemapName.equals("xmlmarkalar") || sitemap.equals("xmlkategoriler"))) {
+            if ((sitemapName.equals("xmlmarkalar") || sitemapName.equals("xmlkategoriler"))) {
                 String sitemapTempLoc = robotName + File.separator + sitemap.substring(sitemap.lastIndexOf('/') + 1, sitemap.length());
 
                 Fetcher fetcher = new Fetcher(sitemap);
